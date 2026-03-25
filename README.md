@@ -8,5 +8,6 @@
 4. run your bot using `nb run --reload` .
 
 ## Documentation
+开发早期，敬请期待
 
 See [Docs](https://nonebot.dev/)
