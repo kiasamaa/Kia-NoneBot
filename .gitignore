@@ -2,6 +2,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
+
+.vscode/
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -107,8 +110,6 @@ celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
-
-.vscode/
 
 # Environments
 .env
