@@ -16,7 +16,7 @@ from openai import AsyncOpenAI
 
 
 AI_API_KEY = "sk-d95378ea73e6431b97dd55458b376e82"
-AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 AI_MODEL = "qwen3.5-plus"
 
 client = AsyncOpenAI(
@@ -51,8 +51,7 @@ class Model:
                 client.chat.completions.create(
                     model=AI_MODEL,
                     messages=messages,
-                    temperature=0.7,
-                    max_tokens=500,
+                    stream=False
                 ),
                 timeout=30  # 30秒超时
             )
