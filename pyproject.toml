@@ -3,11 +3,10 @@ name = "kia-bot"
 version = "0.1.0"
 description = "kia-bot"
 readme = "README.md"
-requires-python = ">=3.10, <4.0"
+requires-python = ">=3.11, <4.0"
 dependencies = [
     "nonebot2[fastapi]>=2.4.4",
     "nonebot-adapter-onebot>=2.4.6",
-    "nonebot-plugin-alconna>=0.61.0",
     "nonebot-plugin-localstore>=0.7.4",
 ]
 
@@ -32,12 +31,11 @@ nonebot-adapter-onebot = [
 
 [tool.nonebot.plugins]
 "@local" = []
-nonebot-plugin-alconna = ["nonebot_plugin_alconna"]
 nonebot-plugin-localstore = ["nonebot_plugin_localstore"]
 
 
 [tool.pyright]
 # For Pylance/Pyright configurations, see https://microsoft.github.io/pyright/#/configuration.
-pythonVersion = "3.9"
+pythonVersion = "3.11"
 pythonPlatform = "All"
 typeCheckingMode = "standard"

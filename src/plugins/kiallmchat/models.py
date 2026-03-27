@@ -16,17 +16,17 @@ from nonebot.adapters.onebot.v11 import (
 
 from nonebot.log import logger
 from openai import AsyncOpenAI
-from .config import global_config
+from .config import config_manager
 from .context import context_manager
 
 
 class AIClient:
     def __init__(self):
         self.client = AsyncOpenAI(
-            api_key= global_config.ai_api_key,
-            base_url= global_config.ai_base_url,
+            api_key= config_manager.config.ai_api_key,
+            base_url= config_manager.config.ai_base_url,
         )
-        self.model = global_config.ai_model
+        self.model = config_manager.config.ai_model
         
     async def chat(self, user_input: str, history: list[dict], raw_message=None) -> str:
         """
@@ -44,7 +44,7 @@ class AIClient:
 
         messages = [
             {"role": "system", "content": "你是一个可爱的群聊助手，请用轻松友好的语气回答。"},
-            *history[-global_config.max_history:],   # 根据配置数量显示最近历史信息
+            *history[-config_manager.config.max_history:],   # 根据配置数量显示最近历史信息
             {"role": "user", "content": user_input},
         ]
         try:
@@ -64,18 +64,18 @@ class AIClient:
     async def try_active_speak(self, bot: Bot, event: GroupMessageEvent, user_text: str):
         """判断是否主动发言，若是则生成并发送"""
         group_id = event.group_id
-        if not context_manager.can_active_speak(group_id):
+        if not context_manager.can_active_speak(group_id, config_manager.config.active_interval):
             return
         
         # 概率触发或关键词触发
-        should_act = (random.random() < global_config.active_prob) or \
-                    any(keyword in user_text for keyword in global_config.active_keywords)
+        should_act = (random.random() < config_manager.config.active_prob) or \
+                    any(keyword in user_text for keyword in config_manager.config.active_keywords)
         
         if not should_act:
             return
         
         # 获取最近历史（用于生成自然的主动发言）
-        history = await context_manager.get_history(group_id)
+        history = await context_manager.get_history(group_id, limit=config_manager.config.max_history)
 
         # 调用 AI 生成主动发言（使用单独的prompt）
         active_reply = await self.chat(user_text, history)

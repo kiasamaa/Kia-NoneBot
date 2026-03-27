@@ -1,21 +1,24 @@
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseModel, Field
 from nonebot import get_driver
 import nonebot_plugin_localstore as store
 from pathlib import Path
 import json
   
 
+# ===============
+DEBUG = True
+# ===============
+
 class BaseConfig(BaseModel):
-    #同时设置默认值
-    ai_api_key: str = Field(..., alias="AI_API_KEY")
-    ai_base_url: str = Field("https://api.openai.com/v1", alias="AI_BASE_URL")
-    ai_model: str = Field("gpt-3.5-turbo", alias="AI_MODEL")
-    max_history: int = Field(30, alias="MAX_HISTORY")
-    active_prob: float = Field(0.03, alias="ACTIVE_PROB")
-    active_keywords: list[str] = Field(["机器人", "小助手", "帮帮我"], alias="ACTIVE_KEYWORDS")
-    active_interval: int = Field(600, alias="ACTIVE_INTERVAL")
-    nickname: str = list(Field(["bot"], alias="NICKNAME"))[0]
-    emotions_dir:str = Field("", alias="EMOTIONS_DIR")
+    """可修改的插件配置（存储在 JSON 中）"""
+    ai_api_key: str = ""
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = "gpt-3.5-turbo"
+    max_history: int = 30
+    active_prob: float = 0.03
+    active_keywords: list[str] = ["机器人", "小助手", "帮帮我"]
+    active_interval: int = 600
+    emotions_dir:str = ""
 
 #读取本地配置
 config_path: Path = store.get_plugin_config_dir()
@@ -23,34 +26,52 @@ config_path: Path = store.get_plugin_config_dir()
 # 默认使用.env配置
 driver = get_driver()
 plugin_config = driver.config
-env_config = BaseConfig(**plugin_config.model_dump())   # '**'是函数字典参数收集符号
 
 
 # 动态配置（可运行时修改，保存在本地 JSON 文件）
-class Config:
+class ConfigManager:
     def __init__(self):
         self.config_path = Path(config_path / "config.json")
-        self.config = self.load()
-    
+        self._config = self.load()
+        self._nickname = list(plugin_config.nickname)[0]
+        self._superusers = plugin_config.superusers
+
     def load(self) -> BaseConfig:
-        if self.config_path.exists():
-            try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
-                    return env_config.model_validate_json(json.load(f))
-            except FileNotFoundError:
-                return self.config_init() #初次启动时，在对应目录生成配置文件
-        else:
-            return env_config
+        try:
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                if DEBUG:
+                    print(f"加载配置: {config}")
+
+                return BaseConfig.model_validate(config)
+              
+            
+        except FileNotFoundError:
+            return self.config_init() #初次启动时，在对应目录生成配置文件
+    
                     
     
     def config_init(self) -> BaseConfig:
-        import json
-        with open(self.config_path, "w") as f:
-            json.dump(plugin_config.model_dump, f, indent=4, ensure_ascii=False)
-        return env_config.model_validate(plugin_config)
+        
+        with open(self.config_path, "w", encoding="utf-8") as f:
+            config = BaseConfig()
+            json.dump(config.model_dump(), f, indent=4, ensure_ascii=False)
+        return config
+    
+    # 全局配置访问（只读，因为一般不运行时修改）
+
+    @property
+    def config(self):
+        return self._config
     
     @property
-    def get_config(self):
-        return self.config
+    def nickname(self) -> str:
+        """机器人的昵称（取第一个）"""
+        return self._nickname if self._nickname else ""
 
-global_config = Config().config
+    @property
+    def superusers(self) -> set[str]:
+        """超级用户列表"""
+        return self._superusers
+
+config_manager = ConfigManager()

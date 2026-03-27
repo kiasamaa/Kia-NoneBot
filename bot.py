@@ -1,6 +1,9 @@
 import nonebot
 from nonebot.adapters.onebot.v11 import Adapter as ONEBOT_V11Adapter
 
+import asyncio
+
+
 nonebot.init()
 
 driver = nonebot.get_driver()

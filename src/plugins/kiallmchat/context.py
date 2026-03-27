@@ -1,11 +1,11 @@
 
 import time
 from collections import defaultdict, deque
-from .config import global_config
+from .config import config_manager
 
 class ContextManager:
     def __init__(self):
-        self.max_len = global_config.max_history
+        self.max_len = config_manager.config.max_history
         # 保存群聊近期聊天作为上下文
         self.context = defaultdict(lambda: deque(maxlen=self.max_len))
         # 存储每个群最后主动发言时间
@@ -29,11 +29,11 @@ class ContextManager:
             hist = hist[-limit:]
         return [{"role": msg["role"], "content": msg["content"]} for msg in hist]
     
-    def can_active_speak(self, group_id: int, now: float, interval: int = 30) -> bool:
+    def can_active_speak(self, group_id: int, interval: int = 30) -> bool:
         """检查是否可以进行主动发言（距离上次主动发言超过 interval 秒）"""
-        return now - self.last_active_time.get(group_id, 0) > interval
+        return time.time() - self.last_active_time.get(group_id, 0) > interval
     
-    def record_active_speak(self, group_id: int, now: float):
-        self.last_active_time[group_id] = now
+    def record_active_speak(self, group_id: int):
+        self.last_active_time[group_id] = time.time()
 
 context_manager = ContextManager()

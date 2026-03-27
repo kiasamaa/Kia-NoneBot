@@ -1,9 +1,9 @@
 from nonebot import get_plugin_config
 from nonebot.plugin import PluginMetadata
-from nonebot.plugin.on import on_message, on_notice
+from nonebot.plugin.on import on_message, on_notice, on_command
 from nonebot.log import logger
 from nonebot.rule import to_me
-from .config import BaseConfig
+from .config import BaseConfig, DEBUG
 
 
 
@@ -21,6 +21,7 @@ from nonebot.adapters.onebot.v11 import (
 from .utils import message_format, is_command
 from .models import ai_client
 from .context import context_manager
+from .config import config_manager
 
 __plugin_meta__ = PluginMetadata(
     name="kiallmchat",
@@ -36,6 +37,9 @@ message_matcher = on_message(permission=GROUP, priority=1, block=False)
 
 @message_matcher.handle()
 async def context_record(bot: Bot, event: GroupMessageEvent):
+
+    if DEBUG:
+        logger.info(f"收到消息: {event}")
 
     user_text = message_format(event)
 
@@ -62,7 +66,7 @@ async def handle_ai_reply(bot: Bot, event: GroupMessageEvent):
         return
 
     # 获取上下文历史
-    history = await context_manager.get_history(event.group_id, limit=10)
+    history = await context_manager.get_history(event.group_id, limit=config_manager.config.max_history)
     # 调用AI生成回复
     reply = await ai_client.chat(user_text, history, event.get_message())
     await bot.send(
@@ -78,4 +82,7 @@ poke_matcher = on_notice(rule=to_me(), priority=11, block=False)
 
 @poke_matcher.handle()
 async def handle_poke(bot: Bot, event: PokeNotifyEvent):
+    if DEBUG:
+        logger.info(f"收到戳一戳事件: {event}")
+
     await bot.call_api("send_poke", user_id=event.user_id, group_id=event.group_id)
