@@ -16,7 +16,7 @@ from nonebot.adapters.onebot.v11 import (
 
 from nonebot.log import logger
 from openai import AsyncOpenAI
-from .config import config_manager
+from .config import config_manager, DEBUG
 from .context import context_manager
 
 
@@ -54,12 +54,18 @@ class AIClient:
                 temperature=1.0,
                 max_tokens=1000,
             )
+
+            if DEBUG:
+                logger.info(f"准备调用 AI 接口，使用模型: {self.model}")
+                logger.info(f"base_url : {self.client.base_url}")
+                logger.info(f"resp: {resp}")
+
             content = resp.choices[0].message.content
             return content.strip() if content else "抱歉，我没有理解你的意思。"
         except Exception as e:
-            logger.info(f"API 调用失败: {e}")
+            logger.error(f"API 调用失败: {e}")
             return "error"
-
+        
 
     async def try_active_speak(self, bot: Bot, event: GroupMessageEvent, user_text: str):
         """判断是否主动发言，若是则生成并发送"""
